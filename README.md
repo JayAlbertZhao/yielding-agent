@@ -89,9 +89,12 @@ One small native daemon (`afk-governorw.exe`, ~0.1% CPU) with a tray icon.
 - **Focus**: `EVENT_SYSTEM_FOREGROUND` hook; only governed windows that took focus without recent input.
 - **Audio**: WASAPI session notifications; each agent audio session is muted once (unmute it in the volume
   mixer and it stays unmuted).
-- **Hooks**: `afk-governor hook <event>` reads the daemon's state file and prints hook JSON. Claude gets
-  SessionStart context, UserPromptSubmit context when the mode changed, and `AskUserQuestion` is denied while
-  unattended. Codex gets SessionStart and UserPromptSubmit context.
+- **Hooks**: `afk-governor hook <event>` reads the daemon's state file and prints hook JSON. Sessions get the
+  mode at SessionStart, and again after a prompt or a tool call (PostToolUse) whenever it changed since they
+  were last told, since leaving the PC does not send a prompt. If you leave while Claude is writing without
+  tool calls, its Stop hook blocks the end of that turn once so it can re-decide with the new mode (Claude Code
+  shows this as "Stop hook error"). `AskUserQuestion` is denied while unattended. Codex gets SessionStart,
+  UserPromptSubmit and PostToolUse context. Each hook call costs about 60 ms, mostly Git Bash startup.
 
 ## Limitations
 

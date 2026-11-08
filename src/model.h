@@ -85,17 +85,19 @@ std::string serialize_state(const State& s);
 State parse_state(const std::string& text);
 
 // ---- Hook output ----
-enum class HookEvent { SessionStart, UserPrompt, PreToolAsk };
+enum class HookEvent { SessionStart, UserPrompt, PreToolAsk, PostTool, Stop };
 bool parse_hook_event(const std::wstring& s, HookEvent* out);
 
 // Context line describing the current mode, or "" when the daemon is not running.
 std::string context_text(const State& s);
-// Full JSON for stdout; "" means print nothing. `last_mode` is what this session was told
-// before ("" if never); UserPrompt only re-injects on change.
-std::string hook_output(HookEvent ev, const State& s, const std::string& last_mode);
+// Full JSON for stdout; "" means print nothing. `last_mode` is what this session was told before
+// ("" if never, "off" after a governor-stopped notice); UserPrompt and PostTool only inject on
+// change. Stop blocks once when the user went away mid-turn and the session was not told yet.
+std::string hook_output(HookEvent ev, const State& s, const std::string& last_mode, bool stop_hook_active = false);
 std::string json_escape(const std::string& s);
-// Extracts a top-level string field from a hook's stdin JSON (best effort).
+// Best-effort readers for a hook's stdin JSON.
 std::string json_string_field(const std::string& json, const std::string& key);
+bool json_true_field(const std::string& json, const std::string& key);
 
 // Codex ~/.codex/hooks.json content invoking `exe` (forward-slash path).
 std::string codex_hooks_json(const std::string& exe);

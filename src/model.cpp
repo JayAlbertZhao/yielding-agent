@@ -200,6 +200,8 @@ bool parse_hook_event(const std::wstring& s, HookEvent* out) {
     if (s == L"session-start") *out = HookEvent::SessionStart;
     else if (s == L"user-prompt") *out = HookEvent::UserPrompt;
     else if (s == L"pre-tool-ask") *out = HookEvent::PreToolAsk;
+    else if (s == L"post-tool") *out = HookEvent::PostTool;
+    else if (s == L"stop") *out = HookEvent::Stop;
     else return false;
     return true;
 }
@@ -247,22 +249,36 @@ std::string json_escape(const std::string& s) {
     return o;
 }
 
-std::string hook_output(HookEvent ev, const State& s, const std::string& last_mode) {
+static std::string context_json(const char* event, const std::string& text) {
+    return std::string("{\"hookSpecificOutput\":{\"hookEventName\":\"") + event + "\",\"additionalContext\":\"" +
+           json_escape(text) + "\"}}";
+}
+
+std::string hook_output(HookEvent ev, const State& s, const std::string& last_mode, bool stop_hook_active) {
+    const char* event = ev == HookEvent::SessionStart ? "SessionStart"
+                        : ev == HookEvent::UserPrompt ? "UserPromptSubmit"
+                                                      : "PostToolUse";
+    bool on_change = ev == HookEvent::UserPrompt || ev == HookEvent::PostTool;
     if (!s.running) {  // tell sessions that were given a budget that it no longer applies
-        if (ev != HookEvent::UserPrompt || (last_mode != "attended" && last_mode != "unattended")) return "";
-        return "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"" +
-               json_escape("[afk-governor] The governor is no longer running; earlier resource budgets and "
-                           "away-mode instructions no longer apply.") +
-               "\"}}";
+        if (!on_change || (last_mode != "attended" && last_mode != "unattended")) return "";
+        return context_json(event, "[afk-governor] The governor is no longer running; earlier resource budgets "
+                                   "and away-mode instructions no longer apply.");
     }
     switch (ev) {
         case HookEvent::SessionStart:
-        case HookEvent::UserPrompt: {
-            if (ev == HookEvent::UserPrompt && last_mode == mode_name_a(s.mode)) return "";
-            const char* name = ev == HookEvent::SessionStart ? "SessionStart" : "UserPromptSubmit";
-            return std::string("{\"hookSpecificOutput\":{\"hookEventName\":\"") + name +
-                   "\",\"additionalContext\":\"" + json_escape(context_text(s)) + "\"}}";
-        }
+        case HookEvent::UserPrompt:
+        case HookEvent::PostTool:
+            if (on_change && last_mode == mode_name_a(s.mode)) return "";
+            return context_json(event, context_text(s));
+        case HookEvent::Stop:
+            // The user left mid-turn: no prompt arrives to say so, so catch the session before it
+            // ends the turn waiting on them. Once per stop (stop_hook_active guards the loop).
+            if (s.mode != Mode::Unattended || last_mode == "unattended" || stop_hook_active) return "";
+            return "{\"decision\":\"block\",\"reason\":\"" +
+                   json_escape(context_text(s) + " This changed during your turn. Before ending it, decide "
+                                                 "anything you were going to leave to the user that you can decide "
+                                                 "yourself; then finish.") +
+                   "\"}";
         case HookEvent::PreToolAsk:
             if (s.mode != Mode::Unattended) return "";
             return "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\","
@@ -292,13 +308,24 @@ std::string json_string_field(const std::string& json, const std::string& key) {
     return out;
 }
 
+bool json_true_field(const std::string& json, const std::string& key) {
+    std::string pat = "\"" + key + "\"";
+    size_t p = json.find(pat);
+    if (p == std::string::npos) return false;
+    p = json.find(':', p + pat.size());
+    if (p == std::string::npos) return false;
+    p = json.find_first_not_of(" \t\r\n", p + 1);
+    return p != std::string::npos && json.compare(p, 4, "true") == 0;
+}
+
 std::string codex_hooks_json(const std::string& exe) {
     std::string cmd = exe.find(' ') == std::string::npos ? exe : "\"" + exe + "\"";
     auto entry = [&](const char* ev) {
         return "[{\"hooks\":[{\"type\":\"command\",\"command\":\"" + json_escape(cmd + " hook " + ev) + "\"}]}]";
     };
     return "{\n  \"hooks\": {\n    \"SessionStart\": " + entry("session-start") +
-           ",\n    \"UserPromptSubmit\": " + entry("user-prompt") + "\n  }\n}\n";
+           ",\n    \"UserPromptSubmit\": " + entry("user-prompt") + ",\n    \"PostToolUse\": " + entry("post-tool") +
+           "\n  }\n}\n";
 }
 
 }  // namespace afk

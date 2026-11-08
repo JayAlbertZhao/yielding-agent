@@ -121,9 +121,9 @@ int cmd_hook(const std::wstring& arg) {
     std::wstring sess_file = sid.empty() ? L"" : path_in_home(L"sessions") + L"\\" + wide(sid);
     std::string last;
     if (!sess_file.empty()) read_file(sess_file, &last);
-    std::string o = hook_output(ev, s, last);
+    std::string o = hook_output(ev, s, last, json_true_field(input, "stop_hook_active"));
     out(o);
-    if (!o.empty() && !sess_file.empty() && ev != HookEvent::PreToolAsk) {
+    if (!o.empty() && !sess_file.empty()) {  // every output tells the session the current mode
         CreateDirectoryW(path_in_home(L"sessions").c_str(), nullptr);
         write_file_atomic(sess_file, s.running ? utf8(mode_name(s.mode)) : "off");
     }

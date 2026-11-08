@@ -155,6 +155,19 @@ static void test_state_and_hooks() {
     s.mode = Mode::Unattended;
     CHECK(hook_output(HookEvent::PreToolAsk, s, "").find("\"permissionDecision\":\"deny\"") != std::string::npos);
     CHECK(hook_output(HookEvent::SessionStart, s, "").find("AWAY") != std::string::npos);
+    // Mid-turn: PostTool injects only on change; Stop blocks once when away and not yet told.
+    CHECK(hook_output(HookEvent::PostTool, s, "unattended") == "");
+    CHECK(hook_output(HookEvent::PostTool, s, "attended").find("\"hookEventName\":\"PostToolUse\"") != std::string::npos);
+    CHECK(hook_output(HookEvent::Stop, s, "attended").find("\"decision\":\"block\"") != std::string::npos);
+    CHECK(hook_output(HookEvent::Stop, s, "attended", true) == "");
+    CHECK(hook_output(HookEvent::Stop, s, "unattended") == "");
+    CHECK(hook_output(HookEvent::PostTool, State{}, "unattended").find("no longer running") != std::string::npos);
+    s.mode = Mode::Attended;
+    CHECK(hook_output(HookEvent::Stop, s, "") == "");
+    s.mode = Mode::Unattended;
+    CHECK(json_true_field("{\"stop_hook_active\": true}", "stop_hook_active"));
+    CHECK(!json_true_field("{\"stop_hook_active\":false}", "stop_hook_active"));
+    CHECK(!json_true_field("{}", "stop_hook_active"));
 
     CHECK(json_escape("a\"b\\c\n") == "a\\\"b\\\\c\\n");
     CHECK(json_string_field("{\"x\":1, \"session_id\" : \"ab\\\"c\"}", "session_id") == "ab\"c");
