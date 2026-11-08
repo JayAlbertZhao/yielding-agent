@@ -62,7 +62,7 @@ Needs Git, Visual Studio 2022 (C++ workload) and CMake 3.20+.
    cd yielding-agent
    cmake -S . -B build -G "Visual Studio 17 2022" -A x64
    cmake --build build --config Release
-   buildRelease	est_model.exe
+   build\Release\test_model.exe
    ```
 
 2. Install and start the daemon, with the same options as above:
