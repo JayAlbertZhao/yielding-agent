@@ -1,0 +1,11 @@
+{
+  "name": "afk-governor",
+  "owner": { "name": "JayAlbertZhao" },
+  "plugins": [
+    {
+      "name": "afk-governor",
+      "source": "./plugin",
+      "description": "Tells Claude Code sessions whether you are at the PC (resource budget, background-only UI) or away (no blocking questions). Requires the afk-governor daemon."
+    }
+  ]
+}

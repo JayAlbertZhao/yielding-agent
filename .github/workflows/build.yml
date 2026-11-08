@@ -1,0 +1,37 @@
+name: build
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+          cmake --build build --config Release
+      - name: Unit tests
+        run: build\Release\test_model.exe
+      - name: Package
+        shell: pwsh
+        run: |
+          $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { 'dev' }
+          $dir = "afk-governor-$v-win-x64"
+          New-Item -ItemType Directory $dir | Out-Null
+          Copy-Item build\Release\afk-governor.exe, build\Release\afk-governorw.exe, README.md, LICENSE $dir
+          Compress-Archive $dir "$dir.zip"
+          "ZIP=$dir.zip" >> $env:GITHUB_ENV
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ZIP }}
+          path: ${{ env.ZIP }}
+      - name: Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" "${{ env.ZIP }}" --title "${{ github.ref_name }}" --generate-notes
