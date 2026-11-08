@@ -202,6 +202,7 @@ bool parse_hook_event(const std::wstring& s, HookEvent* out) {
     else if (s == L"pre-tool-ask") *out = HookEvent::PreToolAsk;
     else if (s == L"post-tool") *out = HookEvent::PostTool;
     else if (s == L"stop") *out = HookEvent::Stop;
+    else if (s == L"pre-tool-computer") *out = HookEvent::PreToolComputer;
     else return false;
     return true;
 }
@@ -254,7 +255,17 @@ static std::string context_json(const char* event, const std::string& text) {
            json_escape(text) + "\"}}";
 }
 
-std::string hook_output(HookEvent ev, const State& s, const std::string& last_mode, bool stop_hook_active) {
+bool is_computer_use_tool(const std::string& tool) {
+    return tool.rfind("mcp__computer-use__", 0) == 0 || tool.rfind("mcp__remote-devices__computer", 0) == 0;
+}
+
+static std::string permission_json(const char* decision, const std::string& reason) {
+    return std::string("{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"") +
+           decision + "\",\"permissionDecisionReason\":\"" + json_escape(reason) + "\"}}";
+}
+
+std::string hook_output(HookEvent ev, const State& s, const HookInput& in) {
+    const std::string& last_mode = in.last_mode;
     const char* event = ev == HookEvent::SessionStart ? "SessionStart"
                         : ev == HookEvent::UserPrompt ? "UserPromptSubmit"
                                                       : "PostToolUse";
@@ -273,7 +284,7 @@ std::string hook_output(HookEvent ev, const State& s, const std::string& last_mo
         case HookEvent::Stop:
             // The user left mid-turn: no prompt arrives to say so, so catch the session before it
             // ends the turn waiting on them. Once per stop (stop_hook_active guards the loop).
-            if (s.mode != Mode::Unattended || last_mode == "unattended" || stop_hook_active) return "";
+            if (s.mode != Mode::Unattended || last_mode == "unattended" || in.stop_hook_active) return "";
             return "{\"decision\":\"block\",\"reason\":\"" +
                    json_escape(context_text(s) + " This changed during your turn. Before ending it, decide "
                                                  "anything you were going to leave to the user that you can decide "
@@ -281,13 +292,22 @@ std::string hook_output(HookEvent ev, const State& s, const std::string& last_mo
                    "\"}";
         case HookEvent::PreToolAsk:
             if (s.mode != Mode::Unattended) return "";
-            return "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\","
-                   "\"permissionDecisionReason\":\"" +
-                   json_escape("[yielding-agent] The user is away (unattended mode) and cannot answer now. Decide "
-                               "this yourself following the user's guidelines and note the decision in your final "
-                               "report. Only if the question truly blocks all remaining work, end your turn with "
-                               "the question in plain text.") +
-                   "\"}}";
+            return permission_json("deny",
+                                   "[yielding-agent] The user is away (unattended mode) and cannot answer now. Decide "
+                                   "this yourself following the user's guidelines and note the decision in your final "
+                                   "report. Only if the question truly blocks all remaining work, end your turn with "
+                                   "the question in plain text.");
+        case HookEvent::PreToolComputer:
+            // Attended: the user approves every computer-use action. Unattended: one approval earlier
+            // in the session carries over; without one the prompt waits for the user's return.
+            if (s.mode == Mode::Unattended && in.computer_use_approved)
+                return permission_json("allow", "[yielding-agent] Computer use was approved earlier in this "
+                                                "session and the user is away.");
+            return permission_json("ask", s.mode == Mode::Attended
+                                              ? "[yielding-agent] The user is at the computer: each computer-use "
+                                                "action needs their approval."
+                                              : "[yielding-agent] Computer use has not been approved in this "
+                                                "session yet.");
     }
     return "";
 }

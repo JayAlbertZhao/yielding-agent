@@ -10,6 +10,7 @@ them run flat out when you are away.
 | GPU | over 75% utilization or VRAM → the heaviest tool call is suspended | unlimited |
 | Windows | agent windows that grab focus without your input get minimized | — |
 | Audio | agent-started programs start muted | same |
+| Computer use (Claude) | you approve every action | one approval earlier in the session carries over |
 | Agents are told | the budget, and to keep programs in the background | not to block on questions; decide and report |
 
 You are "away" after 30 minutes without keyboard/mouse input or when the screen is locked. Any input switches
@@ -93,7 +94,9 @@ One small native daemon (`yielding-agentw.exe`, ~0.1% CPU) with a tray icon.
   mode at SessionStart, and again after a prompt or a tool call (PostToolUse) whenever it changed since they
   were last told, since leaving the PC does not send a prompt. If you leave while Claude is writing without
   tool calls, its Stop hook blocks the end of that turn once so it can re-decide with the new mode (Claude Code
-  shows this as "Stop hook error"). `AskUserQuestion` is denied while unattended. Codex gets SessionStart,
+  shows this as "Stop hook error"). `AskUserQuestion` is denied while unattended. Computer-use tools (`mcp__computer-use__*`,
+  `mcp__remote-devices__computer*`) always prompt while attended; while unattended they run without a prompt
+  once a computer-use call has run in that session. Codex gets SessionStart,
   UserPromptSubmit and PostToolUse context. Each hook call costs about 60 ms, mostly Git Bash startup.
 
 ## Limitations

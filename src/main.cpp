@@ -119,14 +119,24 @@ int cmd_hook(const std::wstring& arg) {
     for (char c : json_string_field(input, "session_id"))
         if (isalnum((unsigned char)c) || c == '-' || c == '_') sid += c;
     std::wstring sess_file = sid.empty() ? L"" : path_in_home(L"sessions") + L"\\" + wide(sid);
-    std::string last;
-    if (!sess_file.empty()) read_file(sess_file, &last);
-    std::string o = hook_output(ev, s, last, json_true_field(input, "stop_hook_active"));
-    out(o);
-    if (!o.empty() && !sess_file.empty()) {  // every output tells the session the current mode
-        CreateDirectoryW(path_in_home(L"sessions").c_str(), nullptr);
-        write_file_atomic(sess_file, s.running ? utf8(mode_name(s.mode)) : "off");
+    std::wstring cu_file = sess_file + L".computer-use";  // exists once a computer-use call ran
+    HookInput in;
+    in.stop_hook_active = json_true_field(input, "stop_hook_active");
+    if (!sess_file.empty()) {
+        read_file(sess_file, &in.last_mode);
+        in.computer_use_approved = GetFileAttributesW(cu_file.c_str()) != INVALID_FILE_ATTRIBUTES;
     }
+    std::string o = hook_output(ev, s, in);
+    out(o);
+    if (sess_file.empty()) return 0;
+    CreateDirectoryW(path_in_home(L"sessions").c_str(), nullptr);
+    // PostToolUse only fires for calls that were allowed and ran: that is the approval record.
+    if (ev == HookEvent::PostTool && !in.computer_use_approved &&
+        is_computer_use_tool(json_string_field(input, "tool_name")))
+        write_file_atomic(cu_file, "approved");
+    // Outputs the model reads tell it the current mode (a permission prompt's reason goes to the user).
+    if (!o.empty() && ev != HookEvent::PreToolComputer)
+        write_file_atomic(sess_file, s.running ? utf8(mode_name(s.mode)) : "off");
     return 0;
 }
 
@@ -251,7 +261,8 @@ const char kHelp[] =
     "  install [--autostart] [--codex] [--no-start]\n"
     "  uninstall\n"
     "  restore               undo limits left behind by a crashed daemon\n"
-    "  hook <session-start|user-prompt|pre-tool-ask>   agent hook entry (reads JSON on stdin)\n"
+    "  hook <event>          agent hook entry (reads JSON on stdin); events: session-start,\n"
+    "                        user-prompt, post-tool, stop, pre-tool-ask, pre-tool-computer\n"
     "  run                   run the daemon in this process\n"
     "  version\n";
 

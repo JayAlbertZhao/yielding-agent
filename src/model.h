@@ -85,15 +85,23 @@ std::string serialize_state(const State& s);
 State parse_state(const std::string& text);
 
 // ---- Hook output ----
-enum class HookEvent { SessionStart, UserPrompt, PreToolAsk, PostTool, Stop };
+enum class HookEvent { SessionStart, UserPrompt, PreToolAsk, PostTool, Stop, PreToolComputer };
 bool parse_hook_event(const std::wstring& s, HookEvent* out);
+bool is_computer_use_tool(const std::string& tool_name);
+
+struct HookInput {
+    std::string last_mode;  // what this session was told before: "" never, "off" after a stopped notice
+    bool stop_hook_active = false;
+    bool computer_use_approved = false;  // a computer-use call already ran in this session
+};
 
 // Context line describing the current mode, or "" when the daemon is not running.
 std::string context_text(const State& s);
-// Full JSON for stdout; "" means print nothing. `last_mode` is what this session was told before
-// ("" if never, "off" after a governor-stopped notice); UserPrompt and PostTool only inject on
+// Full JSON for stdout; "" means print nothing. UserPrompt and PostTool only inject on mode
 // change. Stop blocks once when the user went away mid-turn and the session was not told yet.
-std::string hook_output(HookEvent ev, const State& s, const std::string& last_mode, bool stop_hook_active = false);
+// PreToolComputer asks for approval on every call while attended and inherits a session's earlier
+// approval while unattended.
+std::string hook_output(HookEvent ev, const State& s, const HookInput& in);
 std::string json_escape(const std::string& s);
 // Best-effort readers for a hook's stdin JSON.
 std::string json_string_field(const std::string& json, const std::string& key);

@@ -123,6 +123,14 @@ static void test_policy() {
     CHECK(r.suspend.empty());
 }
 
+static std::string H(HookEvent ev, const State& s, const std::string& last, bool stop = false, bool cu = false) {
+    HookInput in;
+    in.last_mode = last;
+    in.stop_hook_active = stop;
+    in.computer_use_approved = cu;
+    return hook_output(ev, s, in);
+}
+
 static void test_state_and_hooks() {
     State s;
     s.running = true;
@@ -140,31 +148,41 @@ static void test_state_and_hooks() {
     CHECK(t.gpu_util_cap == 75 && t.suspended.size() == 2 && t.suspended[1].pid == 789 && t.suspended[1].create == 1011);
     CHECK(!parse_state("").running);
 
-    CHECK(hook_output(HookEvent::SessionStart, State{}, "") == "");
-    CHECK(hook_output(HookEvent::UserPrompt, State{}, "") == "");
-    CHECK(hook_output(HookEvent::UserPrompt, State{}, "off") == "");
-    CHECK(hook_output(HookEvent::UserPrompt, State{}, "attended").find("no longer running") != std::string::npos);
-    CHECK(hook_output(HookEvent::PreToolAsk, State{}, "unattended") == "");
-    std::string o = hook_output(HookEvent::SessionStart, s, "");
+    CHECK(H(HookEvent::SessionStart, State{}, "") == "");
+    CHECK(H(HookEvent::UserPrompt, State{}, "") == "");
+    CHECK(H(HookEvent::UserPrompt, State{}, "off") == "");
+    CHECK(H(HookEvent::UserPrompt, State{}, "attended").find("no longer running") != std::string::npos);
+    CHECK(H(HookEvent::PreToolAsk, State{}, "unattended") == "");
+    std::string o = H(HookEvent::SessionStart, s, "");
     CHECK(o.find("\"hookEventName\":\"SessionStart\"") != std::string::npos);
     CHECK(o.find("AT the computer") != std::string::npos && o.find("14 logical cores") != std::string::npos);
     CHECK(o.find("32.0 GB") != std::string::npos);
-    CHECK(hook_output(HookEvent::UserPrompt, s, "attended") == "");
-    CHECK(hook_output(HookEvent::UserPrompt, s, "unattended").find("UserPromptSubmit") != std::string::npos);
-    CHECK(hook_output(HookEvent::PreToolAsk, s, "") == "");
+    CHECK(H(HookEvent::UserPrompt, s, "attended") == "");
+    CHECK(H(HookEvent::UserPrompt, s, "unattended").find("UserPromptSubmit") != std::string::npos);
+    CHECK(H(HookEvent::PreToolAsk, s, "") == "");
     s.mode = Mode::Unattended;
-    CHECK(hook_output(HookEvent::PreToolAsk, s, "").find("\"permissionDecision\":\"deny\"") != std::string::npos);
-    CHECK(hook_output(HookEvent::SessionStart, s, "").find("AWAY") != std::string::npos);
+    CHECK(H(HookEvent::PreToolAsk, s, "").find("\"permissionDecision\":\"deny\"") != std::string::npos);
+    CHECK(H(HookEvent::SessionStart, s, "").find("AWAY") != std::string::npos);
     // Mid-turn: PostTool injects only on change; Stop blocks once when away and not yet told.
-    CHECK(hook_output(HookEvent::PostTool, s, "unattended") == "");
-    CHECK(hook_output(HookEvent::PostTool, s, "attended").find("\"hookEventName\":\"PostToolUse\"") != std::string::npos);
-    CHECK(hook_output(HookEvent::Stop, s, "attended").find("\"decision\":\"block\"") != std::string::npos);
-    CHECK(hook_output(HookEvent::Stop, s, "attended", true) == "");
-    CHECK(hook_output(HookEvent::Stop, s, "unattended") == "");
-    CHECK(hook_output(HookEvent::PostTool, State{}, "unattended").find("no longer running") != std::string::npos);
+    CHECK(H(HookEvent::PostTool, s, "unattended") == "");
+    CHECK(H(HookEvent::PostTool, s, "attended").find("\"hookEventName\":\"PostToolUse\"") != std::string::npos);
+    CHECK(H(HookEvent::Stop, s, "attended").find("\"decision\":\"block\"") != std::string::npos);
+    CHECK(H(HookEvent::Stop, s, "attended", true) == "");
+    CHECK(H(HookEvent::Stop, s, "unattended") == "");
+    CHECK(H(HookEvent::PostTool, State{}, "unattended").find("no longer running") != std::string::npos);
     s.mode = Mode::Attended;
-    CHECK(hook_output(HookEvent::Stop, s, "") == "");
+    CHECK(H(HookEvent::Stop, s, "") == "");
     s.mode = Mode::Unattended;
+    // Computer use: attended asks every time; unattended inherits a session's earlier approval.
+    s.mode = Mode::Attended;
+    CHECK(H(HookEvent::PreToolComputer, s, "", false, true).find("\"permissionDecision\":\"ask\"") != std::string::npos);
+    s.mode = Mode::Unattended;
+    CHECK(H(HookEvent::PreToolComputer, s, "", false, true).find("\"permissionDecision\":\"allow\"") != std::string::npos);
+    CHECK(H(HookEvent::PreToolComputer, s, "", false, false).find("\"permissionDecision\":\"ask\"") != std::string::npos);
+    CHECK(H(HookEvent::PreToolComputer, State{}, "", false, false) == "");  // no governor: no policy
+    CHECK(is_computer_use_tool("mcp__computer-use__left_click"));
+    CHECK(is_computer_use_tool("mcp__remote-devices__computer_batch"));
+    CHECK(!is_computer_use_tool("mcp__claude-in-chrome__computer"));
     CHECK(json_true_field("{\"stop_hook_active\": true}", "stop_hook_active"));
     CHECK(!json_true_field("{\"stop_hook_active\":false}", "stop_hook_active"));
     CHECK(!json_true_field("{}", "stop_hook_active"));

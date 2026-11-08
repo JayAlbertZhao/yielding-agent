@@ -7,7 +7,8 @@
       { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook user-prompt 2>/dev/null || true" }] }
     ],
     "PreToolUse": [
-      { "matcher": "AskUserQuestion", "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook pre-tool-ask 2>/dev/null || true" }] }
+      { "matcher": "AskUserQuestion", "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook pre-tool-ask 2>/dev/null || true" }] },
+      { "matcher": "^mcp__computer-use__.*|^mcp__remote-devices__computer.*", "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook pre-tool-computer 2>/dev/null || true" }] }
     ],
     "PostToolUse": [
       { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook post-tool 2>/dev/null || true" }] }
