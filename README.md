@@ -22,11 +22,15 @@ call also resumes once there is headroom.
 
 ## Install
 
-Requirements: Windows 10/11 x64. No runtime dependencies. The binaries are not code-signed, so SmartScreen
-may ask for confirmation on first run.
+Requirements: Windows 10/11 x64. The binaries have no runtime dependencies and are not code-signed, so
+SmartScreen may ask for confirmation on first run.
 
-1. Download `yielding-agent-<version>-win-x64.zip` from [Releases](https://github.com/JayAlbertZhao/yielding-agent/releases)
-   and unzip it anywhere.
+- Source: <https://github.com/JayAlbertZhao/yielding-agent>
+- Releases: <https://github.com/JayAlbertZhao/yielding-agent/releases>
+
+### From a release
+
+1. Download `yielding-agent-<version>-win-x64.zip` from Releases and unzip it anywhere.
 2. In PowerShell, from the unzipped folder, install and start the daemon (it copies itself to
    `%LOCALAPPDATA%\Programs\yielding-agent`):
 
@@ -37,7 +41,7 @@ may ask for confirmation on first run.
    `--autostart` adds a shortcut to your Startup folder. Add `--codex` to also write Codex hooks to
    `~/.codex/hooks.json` (only if that file does not exist yet; otherwise the snippet is printed for you to
    merge). Codex asks you to review and trust new hooks once.
-3. Claude Code hooks (mode context, blocking-question guard):
+3. Claude Code hooks (mode context, blocking-question guard, computer-use approval):
 
    ```bash
    claude plugin marketplace add JayAlbertZhao/yielding-agent
@@ -46,6 +50,33 @@ may ask for confirmation on first run.
 
    The plugin calls the installed exe through Git Bash (Claude Code's default hook shell on Windows). Set
    `YIELDING_AGENT_EXE` if you installed elsewhere.
+
+### From source
+
+Needs Git, Visual Studio 2022 (C++ workload) and CMake 3.20+.
+
+1. Build and run the unit tests:
+
+   ```powershell
+   git clone https://github.com/JayAlbertZhao/yielding-agent
+   cd yielding-agent
+   cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+   cmake --build build --config Release
+   buildRelease	est_model.exe
+   ```
+
+2. Install and start the daemon, with the same options as above:
+
+   ```powershell
+   build\Release\yielding-agent.exe install --autostart
+   ```
+
+3. Claude Code hooks from your checkout:
+
+   ```bash
+   claude plugin marketplace add ./
+   claude plugin install yielding-agent@yielding-agent
+   ```
 
 ## Use
 
@@ -116,16 +147,6 @@ One small native daemon (`yielding-agentw.exe`, ~0.1% CPU) with a tray icon.
 ```
 
 Then `claude plugin uninstall yielding-agent@yielding-agent` and delete the two folders it prints.
-
-## Build
-
-Visual Studio 2022 (C++ workload) and CMake 3.20+:
-
-```bat
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Release
-build\Release\test_model.exe
-```
 
 ## License
 
