@@ -9,7 +9,7 @@
 #include "gpu.h"
 #include "platform.h"
 
-namespace afk {
+namespace yielding {
 
 namespace {
 
@@ -120,7 +120,7 @@ void update_tray(Daemon& d, DWORD msg) {
     nid.uCallbackMessage = kTrayMsg;
     bool on = d.mode == Mode::Attended;
     nid.hIcon = make_icon(on ? RGB(0xF0, 0x9A, 0x1F) : RGB(0x8A, 0x8F, 0x98));
-    _snwprintf_s(nid.szTip, _TRUNCATE, L"afk-governor: %s%s", on ? L"attended, agents limited" : L"unattended, no limits",
+    _snwprintf_s(nid.szTip, _TRUNCATE, L"yielding-agent: %s%s", on ? L"attended, agents limited" : L"unattended, no limits",
                  d.ov == Override::Auto ? L"" : L" (forced)");
     Shell_NotifyIconW(msg, &nid);
     DestroyIcon(nid.hIcon);
@@ -411,7 +411,7 @@ int run_daemon() {
     wc.hInstance = GetModuleHandleW(nullptr);
     wc.lpszClassName = kWindowClass;
     RegisterClassW(&wc);
-    d.hwnd = CreateWindowExW(0, kWindowClass, L"afk-governor", WS_OVERLAPPED, 0, 0, 0, 0, nullptr, nullptr,
+    d.hwnd = CreateWindowExW(0, kWindowClass, L"yielding-agent", WS_OVERLAPPED, 0, 0, 0, 0, nullptr, nullptr,
                              wc.hInstance, nullptr);
     d.taskbar_created = RegisterWindowMessageW(L"TaskbarCreated");
     WTSRegisterSessionNotification(d.hwnd, NOTIFY_FOR_THIS_SESSION);
@@ -453,4 +453,4 @@ int run_daemon() {
     return 0;
 }
 
-}  // namespace afk
+}  // namespace yielding

@@ -9,10 +9,10 @@
 
 #include "model.h"
 
-namespace afk {
+namespace yielding {
 
-constexpr wchar_t kMutexName[] = L"Local\\afk-governor-daemon";
-constexpr wchar_t kWindowClass[] = L"AfkGovernorWnd";
+constexpr wchar_t kMutexName[] = L"Local\\yielding-agent-daemon";
+constexpr wchar_t kWindowClass[] = L"YieldingAgentWnd";
 constexpr UINT kMsgOverride = WM_APP + 1;  // wParam = (WPARAM)Override
 constexpr wchar_t kVersion[] = L"0.1.0";
 
@@ -29,7 +29,7 @@ struct Config {
     int tick_ms = 2000;
 };
 
-std::wstring home_dir();  // %AFK_GOVERNOR_HOME% or %LOCALAPPDATA%\afk-governor (created)
+std::wstring home_dir();  // %YIELDING_AGENT_HOME% or %LOCALAPPDATA%\yielding-agent (created)
 std::wstring path_in_home(const wchar_t* name);
 std::wstring exe_dir();
 std::wstring lower(std::wstring s);
@@ -93,4 +93,4 @@ uint64_t working_set(uint32_t pid);
 // when the daemon died (from_hook: leave the state file alone if a daemon appeared meanwhile).
 void recover_from_state(bool from_hook);
 
-}  // namespace afk
+}  // namespace yielding

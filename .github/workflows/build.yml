@@ -21,9 +21,9 @@ jobs:
         shell: pwsh
         run: |
           $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { 'dev' }
-          $dir = "afk-governor-$v-win-x64"
+          $dir = "yielding-agent-$v-win-x64"
           New-Item -ItemType Directory $dir | Out-Null
-          Copy-Item build\Release\afk-governor.exe, build\Release\afk-governorw.exe, README.md, LICENSE $dir
+          Copy-Item build\Release\yielding-agent.exe, build\Release\yielding-agentw.exe, README.md, LICENSE $dir
           Compress-Archive $dir "$dir.zip"
           "ZIP=$dir.zip" >> $env:GITHUB_ENV
       - uses: actions/upload-artifact@v4

@@ -1,7 +1,7 @@
 {
-  "name": "afk-governor",
+  "name": "yielding-agent",
   "version": "0.1.0",
-  "description": "Presence-aware hooks for the afk-governor daemon: attended-mode resource budget, unattended-mode non-blocking behavior.",
+  "description": "Presence-aware hooks for the yielding-agent daemon: attended-mode resource budget, unattended-mode non-blocking behavior.",
   "author": { "name": "JayAlbertZhao" },
-  "homepage": "https://github.com/JayAlbertZhao/afk-governor"
+  "homepage": "https://github.com/JayAlbertZhao/yielding-agent"
 }

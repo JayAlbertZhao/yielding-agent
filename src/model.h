@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace afk {
+namespace yielding {
 
 enum class Mode { Attended, Unattended };
 enum class Override { Auto, Attended, Unattended };
@@ -102,4 +102,4 @@ bool json_true_field(const std::string& json, const std::string& key);
 // Codex ~/.codex/hooks.json content invoking `exe` (forward-slash path).
 std::string codex_hooks_json(const std::string& exe);
 
-}  // namespace afk
+}  // namespace yielding

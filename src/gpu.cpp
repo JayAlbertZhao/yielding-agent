@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace afk {
+namespace yielding {
 
 namespace {
 struct NvmlUtil { unsigned gpu, memory; };
@@ -131,4 +131,4 @@ Gpu::~Gpu() {
     if (adapter_query_) PdhCloseQuery(adapter_query_);
 }
 
-}  // namespace afk
+}  // namespace yielding

@@ -1,19 +1,19 @@
 {
   "hooks": {
     "SessionStart": [
-      { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${AFK_GOVERNOR_EXE:-$LOCALAPPDATA/Programs/afk-governor/afk-governor.exe}\" hook session-start 2>/dev/null || true" }] }
+      { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook session-start 2>/dev/null || true" }] }
     ],
     "UserPromptSubmit": [
-      { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${AFK_GOVERNOR_EXE:-$LOCALAPPDATA/Programs/afk-governor/afk-governor.exe}\" hook user-prompt 2>/dev/null || true" }] }
+      { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook user-prompt 2>/dev/null || true" }] }
     ],
     "PreToolUse": [
-      { "matcher": "AskUserQuestion", "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${AFK_GOVERNOR_EXE:-$LOCALAPPDATA/Programs/afk-governor/afk-governor.exe}\" hook pre-tool-ask 2>/dev/null || true" }] }
+      { "matcher": "AskUserQuestion", "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook pre-tool-ask 2>/dev/null || true" }] }
     ],
     "PostToolUse": [
-      { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${AFK_GOVERNOR_EXE:-$LOCALAPPDATA/Programs/afk-governor/afk-governor.exe}\" hook post-tool 2>/dev/null || true" }] }
+      { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook post-tool 2>/dev/null || true" }] }
     ],
     "Stop": [
-      { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${AFK_GOVERNOR_EXE:-$LOCALAPPDATA/Programs/afk-governor/afk-governor.exe}\" hook stop 2>/dev/null || true" }] }
+      { "hooks": [{ "type": "command", "shell": "bash", "timeout": 10, "command": "\"${YIELDING_AGENT_EXE:-$LOCALAPPDATA/Programs/yielding-agent/yielding-agent.exe}\" hook stop 2>/dev/null || true" }] }
     ]
   }
 }

@@ -5,7 +5,7 @@
 #include <set>
 #include <sstream>
 
-namespace afk {
+namespace yielding {
 
 const wchar_t* mode_name(Mode m) { return m == Mode::Attended ? L"attended" : L"unattended"; }
 
@@ -215,14 +215,14 @@ static std::string gb(uint64_t bytes) {
 std::string context_text(const State& s) {
     if (!s.running) return "";
     if (s.mode == Mode::Attended) {
-        return "[afk-governor] The user is AT the computer (attended mode). Combined budget for all agent "
+        return "[yielding-agent] The user is AT the computer (attended mode). Combined budget for all agent "
                "sessions: CPU " + std::to_string(s.cpu_count) + " logical cores (enforced by CPU pinning), RAM " +
                gb(s.mem_cap) + ", GPU " + std::to_string(s.gpu_util_cap) + "% utilization and " + gb(s.vram_cap) +
                " VRAM. Size parallelism (--jobs, -j, worker counts) to fit; tool processes over budget are "
                "suspended until headroom returns. Run programs in the background: never bring windows to the "
                "foreground, keep audio muted.";
     }
-    return "[afk-governor] The user is AWAY (unattended mode). No resource limits. Do not block on questions "
+    return "[yielding-agent] The user is AWAY (unattended mode). No resource limits. Do not block on questions "
            "or buttons: decide non-blocking matters yourself following the user's guidelines and list them in "
            "your final report; stop and wait only for a decision that truly blocks all remaining work.";
 }
@@ -261,7 +261,7 @@ std::string hook_output(HookEvent ev, const State& s, const std::string& last_mo
     bool on_change = ev == HookEvent::UserPrompt || ev == HookEvent::PostTool;
     if (!s.running) {  // tell sessions that were given a budget that it no longer applies
         if (!on_change || (last_mode != "attended" && last_mode != "unattended")) return "";
-        return context_json(event, "[afk-governor] The governor is no longer running; earlier resource budgets "
+        return context_json(event, "[yielding-agent] The governor is no longer running; earlier resource budgets "
                                    "and away-mode instructions no longer apply.");
     }
     switch (ev) {
@@ -283,7 +283,7 @@ std::string hook_output(HookEvent ev, const State& s, const std::string& last_mo
             if (s.mode != Mode::Unattended) return "";
             return "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\","
                    "\"permissionDecisionReason\":\"" +
-                   json_escape("[afk-governor] The user is away (unattended mode) and cannot answer now. Decide "
+                   json_escape("[yielding-agent] The user is away (unattended mode) and cannot answer now. Decide "
                                "this yourself following the user's guidelines and note the decision in your final "
                                "report. Only if the question truly blocks all remaining work, end your turn with "
                                "the question in plain text.") +
@@ -328,4 +328,4 @@ std::string codex_hooks_json(const std::string& exe) {
            "\n  }\n}\n";
 }
 
-}  // namespace afk
+}  // namespace yielding

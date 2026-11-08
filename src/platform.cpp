@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <sstream>
 
-namespace afk {
+namespace yielding {
 
 std::wstring lower(std::wstring s) {
     for (auto& c : s) c = towlower(c);
@@ -33,11 +33,11 @@ std::wstring wide(const std::string& s) {
 std::wstring home_dir() {
     wchar_t buf[MAX_PATH];
     std::wstring dir;
-    if (GetEnvironmentVariableW(L"AFK_GOVERNOR_HOME", buf, MAX_PATH)) {
+    if (GetEnvironmentVariableW(L"YIELDING_AGENT_HOME", buf, MAX_PATH)) {
         dir = buf;
     } else {
         GetEnvironmentVariableW(L"LOCALAPPDATA", buf, MAX_PATH);
-        dir = std::wstring(buf) + L"\\afk-governor";
+        dir = std::wstring(buf) + L"\\yielding-agent";
     }
     CreateDirectoryW(dir.c_str(), nullptr);
     return dir;
@@ -63,7 +63,7 @@ void log_line(const wchar_t* fmt, ...) {
     wchar_t line[1200];
     _snwprintf_s(line, _TRUNCATE, L"%04d-%02d-%02d %02d:%02d:%02d %s\r\n", t.wYear, t.wMonth, t.wDay, t.wHour,
                  t.wMinute, t.wSecond, msg);
-    std::wstring path = path_in_home(L"afk-governor.log");
+    std::wstring path = path_in_home(L"yielding-agent.log");
     WIN32_FILE_ATTRIBUTE_DATA fa;
     if (GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &fa) && fa.nFileSizeLow > (1u << 20))
         MoveFileExW(path.c_str(), (path + L".1").c_str(), MOVEFILE_REPLACE_EXISTING);
@@ -77,7 +77,7 @@ void log_line(const wchar_t* fmt, ...) {
 }
 
 static const char kDefaultConfig[] =
-    "; afk-governor configuration. Restart the daemon after editing.\r\n"
+    "; yielding-agent configuration. Restart the daemon after editing.\r\n"
     "[governor]\r\n"
     "; Minutes without keyboard/mouse input before switching to unattended mode.\r\n"
     "idle_minutes=30\r\n"
@@ -350,4 +350,4 @@ void recover_from_state(bool from_hook) {
     write_state(clean);
 }
 
-}  // namespace afk
+}  // namespace yielding

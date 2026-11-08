@@ -8,7 +8,7 @@
 #include <map>
 #include <string>
 
-namespace afk {
+namespace yielding {
 
 struct GpuUsage {
     double util = -1;   // adapter-wide percent; -1 = unknown
@@ -37,4 +37,4 @@ private:
     PDH_HCOUNTER util_ = nullptr, mem_ = nullptr, adapter_mem_ = nullptr;
 };
 
-}  // namespace afk
+}  // namespace yielding

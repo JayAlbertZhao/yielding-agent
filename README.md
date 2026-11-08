@@ -1,4 +1,4 @@
-# afk-governor
+# yielding-agent
 
 Keeps AI coding agents (Claude Code, Codex) from hogging your Windows PC while you are using it, and lets
 them run flat out when you are away.
@@ -24,13 +24,13 @@ call also resumes once there is headroom.
 Requirements: Windows 10/11 x64. No runtime dependencies. The binaries are not code-signed, so SmartScreen
 may ask for confirmation on first run.
 
-1. Download `afk-governor-<version>-win-x64.zip` from [Releases](https://github.com/JayAlbertZhao/afk-governor/releases)
+1. Download `yielding-agent-<version>-win-x64.zip` from [Releases](https://github.com/JayAlbertZhao/yielding-agent/releases)
    and unzip it anywhere.
 2. In PowerShell, from the unzipped folder, install and start the daemon (it copies itself to
-   `%LOCALAPPDATA%\Programs\afk-governor`):
+   `%LOCALAPPDATA%\Programs\yielding-agent`):
 
    ```powershell
-   .\afk-governor.exe install --autostart
+   .\yielding-agent.exe install --autostart
    ```
 
    `--autostart` adds a shortcut to your Startup folder. Add `--codex` to also write Codex hooks to
@@ -39,27 +39,27 @@ may ask for confirmation on first run.
 3. Claude Code hooks (mode context, blocking-question guard):
 
    ```bash
-   claude plugin marketplace add JayAlbertZhao/afk-governor
-   claude plugin install afk-governor@afk-governor
+   claude plugin marketplace add JayAlbertZhao/yielding-agent
+   claude plugin install yielding-agent@yielding-agent
    ```
 
    The plugin calls the installed exe through Git Bash (Claude Code's default hook shell on Windows). Set
-   `AFK_GOVERNOR_EXE` if you installed elsewhere.
+   `YIELDING_AGENT_EXE` if you installed elsewhere.
 
 ## Use
 
 The tray icon menu covers everyday use. From PowerShell:
 
 ```powershell
-$afk = "$env:LOCALAPPDATA\Programs\afk-governor\afk-governor.exe"
-& $afk status
-& $afk mode attended    # or unattended / auto
-& $afk stop             # lifts all limits
-& $afk start
+$ya = "$env:LOCALAPPDATA\Programs\yielding-agent\yielding-agent.exe"
+& $ya status
+& $ya mode attended    # or unattended / auto
+& $ya stop             # lifts all limits
+& $ya start
 ```
 
-Config: `%LOCALAPPDATA%\afk-governor\config.ini` (written with defaults on first run; restart the daemon after
-editing). Log: `afk-governor.log` in the same folder.
+Config: `%LOCALAPPDATA%\yielding-agent\config.ini` (written with defaults on first run; restart the daemon after
+editing). Log: `yielding-agent.log` in the same folder.
 
 | Key | Default | Meaning |
 |---|---|---|
@@ -75,7 +75,7 @@ editing). Log: `afk-governor.log` in the same folder.
 
 ## How it works
 
-One small native daemon (`afk-governorw.exe`, ~0.1% CPU) with a tray icon.
+One small native daemon (`yielding-agentw.exe`, ~0.1% CPU) with a tray icon.
 
 - **Presence**: `GetLastInputInfo` polling (1 s) plus session lock notifications.
 - **Governed set**: agent roots plus all descendants, from a process snapshot every 2 s while attended
@@ -89,7 +89,7 @@ One small native daemon (`afk-governorw.exe`, ~0.1% CPU) with a tray icon.
 - **Focus**: `EVENT_SYSTEM_FOREGROUND` hook; only governed windows that took focus without recent input.
 - **Audio**: WASAPI session notifications; each agent audio session is muted once (unmute it in the volume
   mixer and it stays unmuted).
-- **Hooks**: `afk-governor hook <event>` reads the daemon's state file and prints hook JSON. Sessions get the
+- **Hooks**: `yielding-agent hook <event>` reads the daemon's state file and prints hook JSON. Sessions get the
   mode at SessionStart, and again after a prompt or a tool call (PostToolUse) whenever it changed since they
   were last told, since leaving the PC does not send a prompt. If you leave while Claude is writing without
   tool calls, its Stop hook blocks the end of that turn once so it can re-decide with the new mode (Claude Code
@@ -109,10 +109,10 @@ One small native daemon (`afk-governorw.exe`, ~0.1% CPU) with a tray icon.
 ## Uninstall
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\afk-governor\afk-governor.exe" uninstall
+& "$env:LOCALAPPDATA\Programs\yielding-agent\yielding-agent.exe" uninstall
 ```
 
-Then `claude plugin uninstall afk-governor@afk-governor` and delete the two folders it prints.
+Then `claude plugin uninstall yielding-agent@yielding-agent` and delete the two folders it prints.
 
 ## Build
 

@@ -4,7 +4,7 @@
 
 #include <functional>
 
-namespace afk {
+namespace yielding {
 
 class AudioMuter {
 public:
@@ -19,4 +19,4 @@ private:
     IsGoverned fn_;
 };
 
-}  // namespace afk
+}  // namespace yielding

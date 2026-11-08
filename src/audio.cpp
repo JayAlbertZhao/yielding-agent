@@ -10,7 +10,7 @@
 
 #include "platform.h"
 
-namespace afk {
+namespace yielding {
 
 namespace {
 
@@ -151,4 +151,4 @@ DWORD WINAPI AudioMuter::thread_main(LPVOID p) {
     return 0;
 }
 
-}  // namespace afk
+}  // namespace yielding

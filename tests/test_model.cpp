@@ -3,7 +3,7 @@
 
 #include "model.h"
 
-using namespace afk;
+using namespace yielding;
 
 static int g_fail = 0;
 #define CHECK(c)                                                   \
@@ -175,9 +175,9 @@ static void test_state_and_hooks() {
     HookEvent ev;
     CHECK(parse_hook_event(L"pre-tool-ask", &ev) && ev == HookEvent::PreToolAsk);
 
-    std::string c = codex_hooks_json("C:/Users/A B/afk-governor.exe");
-    CHECK(c.find("\\\"C:/Users/A B/afk-governor.exe\\\" hook session-start") != std::string::npos);
-    CHECK(codex_hooks_json("C:/x/afk-governor.exe").find("\"C:/x/afk-governor.exe hook user-prompt\"") != std::string::npos);
+    std::string c = codex_hooks_json("C:/Users/A B/yielding-agent.exe");
+    CHECK(c.find("\\\"C:/Users/A B/yielding-agent.exe\\\" hook session-start") != std::string::npos);
+    CHECK(codex_hooks_json("C:/x/yielding-agent.exe").find("\"C:/x/yielding-agent.exe hook user-prompt\"") != std::string::npos);
 }
 
 int main() {

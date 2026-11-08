@@ -1,11 +1,11 @@
 {
-  "name": "afk-governor",
+  "name": "yielding-agent",
   "owner": { "name": "JayAlbertZhao" },
   "plugins": [
     {
-      "name": "afk-governor",
+      "name": "yielding-agent",
       "source": "./plugin",
-      "description": "Tells Claude Code sessions whether you are at the PC (resource budget, background-only UI) or away (no blocking questions). Requires the afk-governor daemon."
+      "description": "Tells Claude Code sessions whether you are at the PC (resource budget, background-only UI) or away (no blocking questions). Requires the yielding-agent daemon."
     }
   ]
 }

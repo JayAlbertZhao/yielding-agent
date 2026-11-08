@@ -1,4 +1,4 @@
-// CLI entry. afk-governor.exe (console) and afk-governorw.exe (windowless daemon) share this file.
+// CLI entry. yielding-agent.exe (console) and yielding-agentw.exe (windowless daemon) share this file.
 #include <windows.h>
 #include <shlobj.h>
 
@@ -7,15 +7,15 @@
 
 #include "platform.h"
 
-namespace afk {
+namespace yielding {
 int run_daemon();
 }
 
-using namespace afk;
+using namespace yielding;
 
 namespace {
 
-const wchar_t kRepo[] = L"JayAlbertZhao/afk-governor";
+const wchar_t kRepo[] = L"JayAlbertZhao/yielding-agent";
 
 void out(const std::string& s) {
     DWORD w;
@@ -26,11 +26,11 @@ void outw(const std::wstring& s) { out(utf8(s)); }
 std::wstring install_dir() {
     wchar_t buf[MAX_PATH];
     GetEnvironmentVariableW(L"LOCALAPPDATA", buf, MAX_PATH);
-    return std::wstring(buf) + L"\\Programs\\afk-governor";
+    return std::wstring(buf) + L"\\Programs\\yielding-agent";
 }
 
 bool spawn_daemon(const std::wstring& dir) {
-    std::wstring exe = dir + L"\\afk-governorw.exe";
+    std::wstring exe = dir + L"\\yielding-agentw.exe";
     std::wstring cmd = L"\"" + exe + L"\" run";
     STARTUPINFOW si{sizeof si};
     PROCESS_INFORMATION pi{};
@@ -69,7 +69,7 @@ int cmd_stop() {
 
 int cmd_mode(const std::wstring& arg) {
     Override o;
-    if (!parse_override(arg, &o)) return out("usage: afk-governor mode auto|attended|unattended\n"), 1;
+    if (!parse_override(arg, &o)) return out("usage: yielding-agent mode auto|attended|unattended\n"), 1;
     HWND w = FindWindowW(kWindowClass, nullptr);
     if (!w) return out("daemon not running\n"), 1;
     PostMessageW(w, kMsgOverride, (WPARAM)o, 0);
@@ -139,7 +139,7 @@ std::wstring fwd_slashes(std::wstring p) {
 // The 8.3 short form keeps the command free of spaces, so it runs the same under cmd, PowerShell
 // and bash whichever shell Codex uses.
 std::string codex_exe() {
-    std::wstring exe = install_dir() + L"\\afk-governor.exe";
+    std::wstring exe = install_dir() + L"\\yielding-agent.exe";
     wchar_t buf[MAX_PATH];
     DWORD n = GetShortPathNameW(exe.c_str(), buf, MAX_PATH);
     return utf8(fwd_slashes(n && n < MAX_PATH ? std::wstring(buf) : exe));
@@ -154,7 +154,7 @@ std::wstring codex_hooks_path() {
 std::wstring startup_link() {
     PWSTR dir = nullptr;
     SHGetKnownFolderPath(FOLDERID_Startup, 0, nullptr, &dir);
-    std::wstring p = std::wstring(dir) + L"\\afk-governor.lnk";
+    std::wstring p = std::wstring(dir) + L"\\yielding-agent.lnk";
     CoTaskMemFree(dir);
     return p;
 }
@@ -192,7 +192,7 @@ int cmd_install(int argc, wchar_t** argv) {
         if (daemon_alive() && !stop_daemon()) return out("could not stop the running daemon\n"), 1;
         CreateDirectoryW((dest.substr(0, dest.find_last_of(L'\\'))).c_str(), nullptr);
         CreateDirectoryW(dest.c_str(), nullptr);
-        for (const wchar_t* f : {L"afk-governor.exe", L"afk-governorw.exe"})
+        for (const wchar_t* f : {L"yielding-agent.exe", L"yielding-agentw.exe"})
             if (!CopyFileW((src + L"\\" + f).c_str(), (dest + L"\\" + f).c_str(), FALSE))
                 return outw(L"copy failed: " + std::wstring(f) + L"\n"), 1;
     }
@@ -201,7 +201,7 @@ int cmd_install(int argc, wchar_t** argv) {
     outw(L"config: " + path_in_home(L"config.ini") + L"\n");
 
     if (autostart) {
-        bool ok = create_shortcut(startup_link(), dest + L"\\afk-governorw.exe", L"run");
+        bool ok = create_shortcut(startup_link(), dest + L"\\yielding-agentw.exe", L"run");
         outw(ok ? L"autostart: " + startup_link() + L"\n" : L"autostart: failed to create shortcut\n");
     }
     if (codex) {
@@ -210,8 +210,8 @@ int cmd_install(int argc, wchar_t** argv) {
         if (!read_file(hp, &existing)) {
             write_file_atomic(hp, mine);
             outw(L"codex: wrote " + hp + L" (review and trust the hooks in Codex once)\n");
-        } else if (existing.find("afk-governor") != std::string::npos) {
-            outw(L"codex: " + hp + L" already references afk-governor\n");
+        } else if (existing.find("yielding-agent") != std::string::npos) {
+            outw(L"codex: " + hp + L" already references yielding-agent\n");
         } else {
             outw(L"codex: " + hp + L" exists; merge these hooks into it manually:\n");
             out(mine);
@@ -219,7 +219,7 @@ int cmd_install(int argc, wchar_t** argv) {
     }
     if (start) out(spawn_daemon(dest) ? "daemon started\n" : "failed to start daemon\n");
     outw(std::wstring(L"\nClaude Code plugin (hooks):\n  claude plugin marketplace add ") + kRepo +
-         L"\n  claude plugin install afk-governor@afk-governor\n");
+         L"\n  claude plugin install yielding-agent@yielding-agent\n");
     return 0;
 }
 
@@ -232,18 +232,18 @@ int cmd_uninstall() {
         if (existing == codex_hooks_json(codex_exe())) {
             DeleteFileW(hp.c_str());
             out("codex hooks removed\n");
-        } else if (existing.find("afk-governor") != std::string::npos) {
-            outw(L"codex: remove the afk-governor entries from " + hp + L" by hand\n");
+        } else if (existing.find("yielding-agent") != std::string::npos) {
+            outw(L"codex: remove the yielding-agent entries from " + hp + L" by hand\n");
         }
     }
-    outw(L"Remaining manual steps:\n  claude plugin uninstall afk-governor@afk-governor\n  delete " + install_dir() +
+    outw(L"Remaining manual steps:\n  claude plugin uninstall yielding-agent@yielding-agent\n  delete " + install_dir() +
          L"\n  delete " + home_dir() + L"\n");
     return 0;
 }
 
 const char kHelp[] =
-    "afk-governor - keeps AI agent sessions from hogging the PC while you use it\n\n"
-    "usage: afk-governor <command>\n"
+    "yielding-agent - keeps AI agent sessions from hogging the PC while you use it\n\n"
+    "usage: yielding-agent <command>\n"
     "  start                 start the background daemon\n"
     "  stop                  stop it (lifts all limits, resumes suspended processes)\n"
     "  status                show daemon state\n"
@@ -259,7 +259,7 @@ const char kHelp[] =
 
 int wmain(int argc, wchar_t** argv) {
     std::wstring cmd = argc > 1 ? argv[1] : L"";
-#ifdef AFK_GUI
+#ifdef YIELDING_GUI
     if (cmd.empty()) cmd = L"run";
 #endif
     if (cmd == L"run") {
